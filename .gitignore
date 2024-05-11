@@ -1,3 +1,7 @@
 venv/*
 *.exe
 CONFIG.INI
+__pycache__/*
+build/*
+dist/*
+*.spec
