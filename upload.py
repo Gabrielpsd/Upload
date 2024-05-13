@@ -1,3 +1,12 @@
+# DAta da ultima modificação: 12/05/2024 
+# objetivo do programa: Subir arquivos para o servidor SFTP da empresa de maneira simples e rápida
+#
+# Modo de utilização: Ao chamar o programa, pode-se passar como argumentos os arquivos que deseja subir no servidor
+#ou pode-se executar o programa sem parametros que ele ira pedir os arquivos como parametro. 
+#
+# Codigo para compilação: 
+#pyinstaller upload.py -p pyFileDir --onefile 
+
 import sys,os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pysftp
@@ -20,6 +29,7 @@ def importfile() -> dict:
         "SFTPExternoPorta":parser["FTPCONFIG"]["SFTPExternoPorta"],
         "SFTPPass":parser["FTPCONFIG"]["SFTPPass"],
         "SFTPUser":parser["FTPCONFIG"]["SFTPUser"],
+        "ProgramPassword": parser["FTPCONFIG"]["ProgramPassword"]
     }
 
 def printmenu() -> None:
@@ -28,6 +38,7 @@ def printmenu() -> None:
     print("      ----------------------- Upload file ------------------------------- ")
     print("         Pode-se chamar o programa no prompt passando o nome do arquivo para um upload automatico")
     print("         Exemplo: Updater file1 file2 - o(s) arquivo(s) sera(ão) Enviados para o Servidor \n")
+    print("         Digite 0 para encerrar o programa !! \n")
     
 def getInput()-> str:
     """Gets the entry of the menu 
@@ -35,6 +46,10 @@ def getInput()-> str:
     Returns the entry of the user """
     printmenu()
     var: str =  input("Digite o nome do arquivo:")
+    
+    if(var == "0"):
+        print("Encerrando ...")
+        exit(0)
     return var.split(" ")
 
 def getArgcArgv()-> list[str]:
@@ -82,8 +97,14 @@ def uploadFile(file: str, connectionData: dict) ->None:
     print("Realizando upload para pasta: /Servidor200/Suporte/13-SFTPTool/",file,sep="")
     with connection.cd():
         connection.cwd("/Servidor200/Suporte/13-SFTPTool")
-        connection.put(localpath=file,callback=progressBar)
-        
+        try:
+            connection.put(localpath=file,callback=progressBar)
+        except FileNotFoundError as error:
+            print("Arquivo digitado não encontrado ")
+            os.system("pause")
+        except Exception as error:
+            print("Erro ",error)
+            
     print("")
     connection.close()
         
@@ -105,6 +126,11 @@ def main()-> None:
     configurations = importfile()
     args = getArgcArgv()
     
+    if(not(getUserPassword(configurations.get("ProgramPassword")))):
+        print("Senha digitada invalida")
+        os.system("Pause")
+        return 0
+    
     if len(args) == 1:
         files = getInput()
         #uploadFile(file=file,connectionData=configurations)
@@ -116,6 +142,13 @@ def main()-> None:
     
     os.system("pause")
     
+def getUserPassword(password: str) -> bool:
+    _password = input("Digite a senha de utilização: ")
     
+    if(password == _password):
+        return True
+    else:
+        return False 
+     
 if __name__ == "__main__":
     main()
